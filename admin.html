@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        #machineList {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .machine-card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 250px;
+        }
+        .machine-card h3 {
+            margin-top: 0;
+        }
+        .status {
+            font-weight: bold;
+        }
+        .on {
+            color: green;
+        }
+        .off {
+            color: red;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Printer Management System</h1>
+    <div id="machineList"></div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby4VUdxNUY3cMJB9bqaazZkQtnhuq-ejWMau4mvAHAorbp2bmXj7zbdbaKXg6rVtunN/exec';
+
+        function fetchMachines() {
+            fetch(`${SCRIPT_URL}?action=listMachines`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 200) {
+                        updateMachineList(data.machines);
+                    } else {
+                        console.error('Error fetching machines:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateMachineList(machines) {
+            const machineListElement = document.getElementById('machineList');
+            machineListElement.innerHTML = '';
+
+            machines.forEach(machine => {
+                const machineCard = document.createElement('div');
+                machineCard.className = 'machine-card';
+                machineCard.innerHTML = `
+                    <h3>${machine.machineType} (ID: ${machine.id})</h3>
+                    <p>Power Status: <span class="status ${machine.powerStatus ? 'on' : 'off'}">${machine.powerStatus ? 'ON' : 'OFF'}</span></p>
+                    <p>Idle Status: <span class="status ${machine.idleStatus ? 'on' : 'off'}">${machine.idleStatus ? 'IDLE' : 'BUSY'}</span></p>
+                    <button onclick="togglePower('${machine.id}', ${!machine.powerStatus})">${machine.powerStatus ? 'Turn Off' : 'Turn On'}</button>
+                `;
+                machineListElement.appendChild(machineCard);
+            });
+        }
+
+        function togglePower(machineId, newPowerStatus) {
+            fetch(`${SCRIPT_URL}?action=update&id=${machineId}&powerStatus=${newPowerStatus}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 200) {
+                        console.log('Machine updated successfully');
+                        fetchMachines(); // Refresh the list after update
+                    } else {
+                        console.error('Error updating machine:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Fetch machines initially and then every second
+        fetchMachines();
+        setInterval(fetchMachines, 1000);
+    </script>
+</body>
+</html>

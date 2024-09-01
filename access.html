@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+        #cardReader {
+            width: 100%;
+            height: 120px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+        #cardReader.active {
+            border-color: #3498db;
+            background-color: #ebf5fb;
+            color: #3498db;
+        }
+        #result {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        #loadingSpinner {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Printer Management System</h1>
+        <p>Please scan your card to identify yourself.</p>
+        <div id="cardReader">Waiting for card scan...</div>
+        <div id="loadingSpinner"></div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let cardInput = '';
+        let resultElement = document.getElementById('result');
+        let cardReaderElement = document.getElementById('cardReader');
+        let loadingSpinner = document.getElementById('loadingSpinner');
+
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'Enter':
+                    processCardData(cardInput);
+                    cardInput = '';
+                    break;
+                default:
+                    if (/^[a-zA-Z0-9]$/.test(e.key)) {
+                        cardInput += e.key;
+                        cardReaderElement.classList.add('active');
+                        cardReaderElement.textContent = 'Card detected...';
+                    }
+                    break;
+            }
+            e.preventDefault();
+        });
+
+        function processCardData(data) {
+            if (data.length > 0) {
+                console.log('Processing card data:', data);
+                cardReaderElement.textContent = 'Card scanned successfully!';
+                fulfillBooking(data);
+            } else {
+                console.log('No card data to process');
+            }
+        }
+
+function fulfillBooking(userId) {
+    loadingSpinner.style.display = 'block';
+    resultElement.textContent = '';
+
+    const url = 'https://script.google.com/macros/s/AKfycby4VUdxNUY3cMJB9bqaazZkQtnhuq-ejWMau4mvAHAorbp2bmXj7zbdbaKXg6rVtunN/exec' +
+                '?action=fulfillBooking' + 
+                '&userId=' + encodeURIComponent(userId);
+
+    fetch(url)
+    .then(response => {
+        loadingSpinner.style.display = 'none';
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(response => {
+        if (response.status === 200) {
+            resultElement.innerHTML = `<span class="success">Printer Assigned Successfully!</span><br>Printer ID: ${response.id}`;
+        } else {
+            resultElement.innerHTML = `<span class="error">${response.message}</span>`;
+        }
+    })
+    .catch(error => {
+        loadingSpinner.style.display = 'none';
+        console.error('Error:', error);
+        resultElement.innerHTML = '<span class="error">An error occurred. Please try again.</span>';
+    })
+    .finally(() => {
+        setTimeout(() => {
+            cardReaderElement.classList.remove('active');
+            cardReaderElement.textContent = 'Waiting for card scan...';
+            resultElement.textContent = '';
+        }, 5000);
+    });
+}
+    </script>
+</body>
+</html>

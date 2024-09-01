@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Booking</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+        #timeslot {
+            font-size: 1.2rem;
+            color: #3498db;
+            margin-bottom: 2rem;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Machine Booking</h1>
+        <p>Select a timeslot for machine type Voron 2.4 350:</p>
+        <div id="timeslot"></div>
+        <button id="bookButton">Book Machine</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        var userId = 123;
+        var machineType = 'Voron 2.4 350';
+        var currentDateTime = new Date();
+        var startTime = new Date(currentDateTime.getTime() - 12 * 60 * 60 * 1000); // 12 hours before current time
+        var endTime = new Date(currentDateTime.getTime() + 12 * 60 * 60 * 1000); // 12 hours after current time
+
+        var url = 'https://script.google.com/macros/s/AKfycby4VUdxNUY3cMJB9bqaazZkQtnhuq-ejWMau4mvAHAorbp2bmXj7zbdbaKXg6rVtunN/exec';
+        url += '?action=book';
+        url += '&startDateTime=' + startTime.toISOString();
+        url += '&endDateTime=' + endTime.toISOString();
+        url += '&userId=' + userId;
+        url += '&machineType=' + encodeURIComponent(machineType);
+
+        document.getElementById('bookButton').addEventListener('click', function() {		
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Booking successful:', data);
+                    document.getElementById('result').innerHTML = '<span class="success">Booking successful!</span>';
+                })
+                .catch(error => {
+                    console.error('Error during booking:', error);
+                    document.getElementById('result').innerHTML = '<span class="error">Error during booking. Please try again.</span>';
+                });
+        });
+
+        // Function to format date and time with AM/PM in Hong Kong timezone
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Hong_Kong'
+            });
+        }
+
+        document.getElementById('timeslot').innerText = 'Selected Timeslot: ' + formatDateTime(startTime) + ' to ' + formatDateTime(endTime);
+    </script>
+</body>
+</html>
